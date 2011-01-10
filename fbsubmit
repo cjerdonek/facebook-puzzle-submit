@@ -317,21 +317,27 @@ def prep_attachments(puzzle_name, submission_directory):
     This function also creates the tar file, if necessary.
 
     """
+    _log.info("Examining submission directory:\n    %s" % submission_directory)
     attachment_paths = []
 
     # We include a script executable or a Makefile, but not both.
     makefile_path = os.path.join(submission_directory, "Makefile")
 
     if os.path.exists(makefile_path):
-        _log.debug("Found makefile: %s" % makefile_path)
+        _log.info("Found makefile.")
         file_path = makefile_path
     else:
-        _log.debug('No makefile found; searching for puzzle executable instead.')
         executable_path = os.path.join(submission_directory, puzzle_name)
         if not os.path.exists(executable_path) or not os.path.isfile(executable_path):
-            raise Error("Neither a makefile nor a puzzle executable found:\n"
-                            "%s\n%s" % (makefile_path, executable_path))
-        _log.debug("Found executable: %s" % executable_path)
+            raise Error("""Neither a makefile nor a puzzle executable was found.
+
+The submission directory for puzzle "%(puzzle_name)s" must contain
+either a makefile called "Makefile" (case-sensitive), or a puzzle
+executable called "%(puzzle_name)s" (also case-sensitive).  Note that
+the file name of the puzzle executable, if provided, should have no
+extension.  The Facebook rules require this.""" %
+{"puzzle_name": puzzle_name})
+        _log.info("Found puzzle executable.")
         file_path = executable_path
 
     attachment_paths.append(file_path)
