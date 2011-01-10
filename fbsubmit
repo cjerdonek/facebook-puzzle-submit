@@ -127,14 +127,17 @@ the e-mail addresses as environment variables with names--
 
 The environment variables, if set, take precedence over the script constants.
 
-Behavior:
+Folder hierarchy:
 
-The parent directory of the given directory should have a name matching
-the name of the puzzle being submitted, for example facebook/hoppity/python
-or puzzles/meepmeep/c.  The script pulls the puzzle name from the parent
-directory.
+The script places certain requirements on the folder hierarchy, as follows.
 
-The script attaches at most two files, as follows:
+The name of the parent directory of the provided directory must match
+the name of the puzzle being submitted.  For example,
+dev/facebook-puzzles/hoppity/python is a valid directory to provide
+because the parent directory has name "hoppity".  The script pulls the
+puzzle name from that parent directory.
+
+The script attaches at most two files from the directory, as follows:
 
 (1) If the given directory contains a file called "Makefile" (case-sensitive),
     the script attaches the makefile.  Otherwise, the script searches for
@@ -143,23 +146,41 @@ The script attaches at most two files, as follows:
 
 (2) Optionally, the given directory can include a subdirectory called "%(lib_folder)s".
     If this directory exists, the script tars, gzips, and attaches this
-    directory as a file called "%(lib_folder)s.tar.gz".
+    directory as a file called "%(lib_folder)s.tar.gz".  The script
+    excludes certain files like hidden files from the gzipped tar file.
 
-Sample directory hierarchies for a scripting language and a compiled
-language are as follows:
+Below is an example of how to organize your files for use with this script.
 
-hoppity/python
-    hoppity (executable)
-    lib
-        __init__.py
-        hoppity.py
+facebook-puzzles/
+    hoppity/
+        /c
+            Makefile
+            log.txt (ignored, not attached to e-mail)
+            lib/
+                meepmeep.c
+        python/
+            hoppity (executable)
+            test.py (ignored, not attached to e-mail)
+            lib/
+                __init__.py
+                hoppity.py
+    meepmeep/
+        solution1/
+            <makefile or executable, and optional lib folder>
+        solution2/
+            <makefile or executable, and optional lib folder>
 
-meepmeep/c
-    Makefile
-    lib
-        meepmeep.c""" % {"lib_folder": LIB_DIRECTORY_NAME,
-                         "sender_env_name": SENDER_ENV_NAME,
-                         "test_env_name": TEST_ENV_NAME}
+With the above hierarchy, all of the following are valid directories
+to provide to the script:
+
+* facebook-puzzles/hoppity/c
+* facebook-puzzles/hoppity/python
+* facebook-puzzles/meepmeep/solution1
+* facebook-puzzles/meepmeep/solution2""" % {
+    "lib_folder": LIB_DIRECTORY_NAME,
+    "sender_env_name": SENDER_ENV_NAME,
+    "test_env_name": TEST_ENV_NAME
+}
 
 
 class Error(Exception):
