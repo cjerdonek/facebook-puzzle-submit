@@ -414,7 +414,7 @@ def mail(smtp_host, smtp_port, sender_address, sender_pwd,
 
     _log.info('Logging in as: %s...' % sender_address)
     mailServer.login(sender_address, sender_pwd)
-    _log.info('Sending mail to: %s...' % str(mail_recipients))
+    _log.info('Sending mail to: %s...' % str(recipient_addresses))
     mailServer.sendmail(sender_address, recipient_addresses, multi.as_string())
 
     mailServer.close()
