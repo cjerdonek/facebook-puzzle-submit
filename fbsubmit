@@ -388,7 +388,8 @@ def add_attachment(mime_multipart, attachment_path):
     mime_multipart.attach(part)
 
 
-def mail(sender_address, sender_pwd, mail_tos, subject, body, attachment_paths):
+def mail(smtp_host, smtp_port, sender_address, sender_pwd, mail_tos,
+         subject, body, attachment_paths):
     """Send an e-mail."""
     mail_ccs = [sender_address]
     mail_recipients = mail_tos + mail_ccs
@@ -406,7 +407,8 @@ def mail(sender_address, sender_pwd, mail_tos, subject, body, attachment_paths):
         _log.debug("Adding attachment to e-mail: %s" % attachment_path)
         add_attachment(multi, attachment_path)
 
-    mailServer = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+    _log.info("Connecting to: %s:%s..." % (smtp_host, smtp_port))
+    mailServer = smtplib.SMTP(smtp_host, smtp_port)
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
@@ -447,7 +449,9 @@ def submit_solution(args):
 
     email_body = "Facebook PuzzleBot submission: %s\n" % message
 
-    mail(sender_address=sender_address,
+    mail(smtp_host=SMTP_HOST,
+         smtp_port=SMTP_PORT,
+         sender_address=sender_address,
          sender_pwd=sender_pwd,
          mail_tos=[submission_address],
          subject=puzzle_name,
