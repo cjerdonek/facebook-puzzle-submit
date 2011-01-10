@@ -369,11 +369,12 @@ extension.  The Facebook rules require this.""" % {"puzzle_name": puzzle_name})
     lib_directory = os.path.join(submission_directory, LIB_DIRECTORY_NAME)
 
     if not os.path.exists(lib_directory):
-        _log.debug('No library directory "%s" found: skipping' % LIB_DIRECTORY_NAME)
+        _log.info("No library directory found: skipping.")
     else:
+        _log.info("Found library directory.")
         attachment_path = create_tar_gz(source_directory=lib_directory)
+        _log.info("Created tar/gzip at:\n    %s" % attachment_path)
         attachment_paths.append(attachment_path)
-        _log.debug("Created attachment at: %s" % attachment_path)
 
     return attachment_paths
 
