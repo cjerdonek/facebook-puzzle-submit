@@ -214,18 +214,26 @@ Follow the setup instructions in the help documentation, and configure the
     return value
 
 
-def check_submission_directory(submission_directory):
-    """Check the submission directory, and return the puzzle name."""
+def read_arguments(args):
+    """Check the arguments, and return the puzzle name and directory."""
+    help_message = ("You must provide a path to the directory containing "
+                    "your puzzle solution.")
+    if not args:
+        raise Error("""No submission directory was provided.
+
+%s""" % help_message)
+    submission_directory = args[0]
+
+    if not os.path.isdir(submission_directory):
+        raise Error("""The path provided is not a path to a directory: %s
+
+%s""" % (submission_directory, help_message))
+
     # Convert to a normalized absolute path to determine the name of the
     # parent directory.  Normalizing also strips off any trailing
     # slashes (e.g. "hoppity/c/").  Otherwise, calling os.path.basename()
     # can result in a base name that is an empty string.
     submission_directory = os.path.abspath(submission_directory)
-
-    if not os.path.isdir(submission_directory):
-        raise Error("The submission directory is not a path to a "
-                    "directory: %s" % submission_directory)
-
     puzzle_directory = os.path.dirname(submission_directory)
     puzzle_name = os.path.basename(puzzle_directory)
 
@@ -237,7 +245,7 @@ def check_submission_directory(submission_directory):
                     "constant." %
                     (puzzle_name, "\n   ".join(VALID_PUZZLE_NAMES)))
 
-    return puzzle_name
+    return (puzzle_name, submission_directory)
 
 
 def should_exclude_from_tar(path):
@@ -394,15 +402,12 @@ def submit_solution(args):
                                            "test submission e-mail address",
                                            TEST_ENV_NAME, TEST_EMAIL_ADDRESS)
 
-    if not args:
-        raise Error("You must provide a submission directory.")
-    submission_directory = args[0]
+    puzzle_name, submission_directory = read_arguments(args)
 
     submission_address = (REAL_SUBMISSION_ADDRESS if options.is_real else
                           test_address)
     message = options.message if options.message else ""
 
-    puzzle_name = check_submission_directory(submission_directory)
     attachment_paths = prep_attachments(puzzle_name, submission_directory)
 
     print 'Submitting puzzle "%s" to %s with--' % (puzzle_name, submission_address)
