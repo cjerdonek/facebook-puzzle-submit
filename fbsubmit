@@ -316,11 +316,18 @@ def create_tar_gz(source_directory):
                 path_to_add = os.path.join(dir_path, file_name)
                 path_to_add = os.path.normpath(path_to_add)
 
-                if should_exclude_from_tar(path_to_add):
-                    _log.debug("Excluding from tar: %s" % path_to_add)
-                    continue
-
+                # For example, if source_directory is--
+                #   /hoppity/python/lib
+                # and path_to_add is--
+                #   /hoppity/python/lib/hoppity.pyc
+                # then arc_name is--
+                #   lib/hoppity.pyc
                 arc_name = path_to_add[characters_to_strip:]
+
+                if should_exclude_from_tar(path_to_add):
+                    # Display the shorter arc_name for easier readability.
+                    _log.info("Excluding from tar: %s" % arc_name)
+                    continue
 
                 # If we don't include the arcname parameter, then the source
                 # directory can extract into a subdirectory of the newly
@@ -371,7 +378,7 @@ extension.  The Facebook rules require this.""" % {"puzzle_name": puzzle_name})
     if not os.path.exists(lib_directory):
         _log.info("No library directory found: skipping.")
     else:
-        _log.info("Found library directory.")
+        _log.info("Found library directory: tar/gzipping...")
         attachment_path = create_tar_gz(source_directory=lib_directory)
         _log.info("Created tar/gzip at:\n    %s" % attachment_path)
         attachment_paths.append(attachment_path)
