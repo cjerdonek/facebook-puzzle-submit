@@ -153,7 +153,7 @@ Below is an example of how to organize your files for use with this script.
 
 facebook-puzzles/
     hoppity/
-        /c
+        c/
             Makefile
             log.txt (ignored, not attached to e-mail)
             lib/
@@ -259,12 +259,14 @@ def read_arguments(args):
     puzzle_name = os.path.basename(puzzle_directory)
 
     if puzzle_name not in VALID_PUZZLE_NAMES:
-        raise Error('The name of the parent directory "%s" does not match '
-                    "the name of a puzzle in the script's list of valid "
-                    "puzzle names:\n\n   %s\n\n"
-                    "If necessary, correct the script's VALID_PUZZLE_NAMES "
-                    "constant." %
-                    (puzzle_name, "\n   ".join(VALID_PUZZLE_NAMES)))
+        raise Error("""The name of the parent directory "%s" does not match the name
+of a puzzle in the script's list of valid puzzle names:
+
+    %s
+
+If necessary, correct the script's VALID_PUZZLE_NAMES constant.""" % (
+    puzzle_name,
+    "\n    ".join(VALID_PUZZLE_NAMES)))
 
     return (puzzle_name, submission_directory)
 
@@ -356,8 +358,8 @@ The submission directory for puzzle "%(puzzle_name)s" must contain
 either a makefile called "Makefile" (case-sensitive), or a puzzle
 executable called "%(puzzle_name)s" (also case-sensitive).  Note that
 the file name of the puzzle executable, if provided, should have no
-extension.  The Facebook rules require this.""" %
-{"puzzle_name": puzzle_name})
+extension.  The Facebook rules require this.""" % {"puzzle_name": puzzle_name})
+
         _log.info("Found puzzle executable.")
         file_path = executable_path
 
@@ -455,10 +457,9 @@ def submit_solution(args):
 
 def exit_with_error(message):
     """Display an error message, and exit the program."""
-    print """
-ERROR: %s
+    _log.error("""%s
 
-Pass -h or --help for help documentation and available options.""" % message
+Pass -h or --help for help documentation and available options.""" % message)
     exit(1)
 
 
