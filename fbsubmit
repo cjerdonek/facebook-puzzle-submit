@@ -29,22 +29,9 @@
 #
 
 """
-Script for submitting puzzle solutions to the Facebook PuzzleBot.
+A script for submitting puzzle solutions to the Facebook PuzzleBot.
 
-For usage instructions, execute this script with the -h or --help option.
-
-This script follows the Facebook Puzzle submission instructions:
-http://www.facebook.com/careers/puzzles.php
-
-This script is especially useful for submitting solutions from a gmail
-account, as the Facebook PuzzleBot is/was unable to read e-mail attachments
-attached using gmail's GUI.  The script author has only tried this script
-using gmail's SMTP servers at smtp.gmail.com.
-
-Setup:
-
-You will need to set the SENDER_ADDRESS and TEST_SUBMISSION_ADDRESS
-constants below before using this script.
+For help documentation, execute this script with the -h or --help option.
 
 """
 
@@ -65,13 +52,16 @@ import tarfile
 
 _log = logging.getLogger("fbsubmit")
 
-# Set these constants before using this script.
-# TODO: use environment variables instead.
-SENDER_ADDRESS = ""  # for example john.doe@gmail.com
-TEST_SUBMISSION_ADDRESS = ""  # for example john.doe.test@hotmail.com
-
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
+
+# Consult the setup section of the help documentation for information
+# on the two configuration values below.
+SENDER_EMAIL_ADDRESS = ""
+TEST_EMAIL_ADDRESS = ""
+
+SENDER_ENV_NAME = "FACEBOOK_PUZZLE_SENDER_EMAIL_ADDRESS"
+TEST_ENV_NAME = "FACEBOOK_PUZZLE_TEST_EMAIL_ADDRESS"
 
 DEBUG_OPTION = "-v"
 EXCLUDE_FROM_TAR = [".pyc"]
@@ -106,8 +96,38 @@ USAGE = """%%prog [options] directory
 This script sends to the Facebook PuzzleBot a puzzle solution contained in
 the given directory.
 
-The script also CC's the solution to the sender.  Configure the sender
-e-mail address from within the script.
+The script also CC's the solution to the sender.
+
+Setup:
+
+You will need to configure the sender and test e-mail addresses prior
+to using this script.
+
+The sender e-mail address is the e-mail address from which to send
+puzzle solutions to Facebook (i.e. the "From:" for the e-mails sent to
+Facebook).
+
+The test e-mail address is the e-mail address to use for testing this
+script.  When running this script in "test mode," the script e-mails
+the puzzle solution to the test e-mail address instead of to Facebook.
+Consult the rest of the help documentation for information on how
+to run the script in "real mode" vs. "test mode."
+
+You can configure the sender and test e-mail addresses in two ways.
+The simplest way is to modify the script code itself by setting the
+script's SENDER_EMAIL_ADDRESS and TEST_EMAIL_ADDRESS constants to the
+desired values.
+
+The second way is to set corresponding environment variables.
+If you are familiar with setting environment variables, you can store
+the e-mail addresses as environment variables with names--
+
+* %(sender_env_name)s
+* %(test_env_name)s
+
+The environment variables, if set, take precedence over the script constants.
+
+Behavior:
 
 The parent directory of the given directory should have a name matching
 the name of the puzzle being submitted, for example facebook/hoppity/python
@@ -137,7 +157,9 @@ hoppity/python
 meepmeep/c
     Makefile
     lib
-        meepmeep.c""" % {"lib_folder": LIB_DIRECTORY_NAME}
+        meepmeep.c""" % {"lib_folder": LIB_DIRECTORY_NAME,
+                         "sender_env_name": SENDER_ENV_NAME,
+                         "test_env_name": TEST_ENV_NAME}
 
 
 class Error(Exception):
@@ -162,13 +184,41 @@ def configure_logging(logging_level=None):
     _log.debug("Debug logging enabled.")
 
 
+def read_user_configuration():
+    """
+    Check and return the user-specified configuration values.
+
+    Returns:
+      (sender_address, test_submission_address)
+
+    """
+    sender_address = os.getenv(SENDER_ENV_NAME, SENDER_EMAIL_ADDRESS)
+    test_submission_address = os.getenv(TEST_ENV_NAME, TEST_EMAIL_ADDRESS)
+
+    if not sender_address:
+        raise Error("""The e-mail address to send from has not been configured.
+
+Follow the setup instructions in the help documentation, and configure the
+sender e-mail address before using this script.""")
+
+    if not test_submission_address:
+        raise Error("""The test e-mail address has not been configured.
+
+Follow the setup instructions in the help documentation, and configure the
+test submission e-mail address before using this script.""")
+
+    _log.debug('User-configuration: read sender address: "%s"' % sender_address)
+    _log.debug('User-configuration: read test address: "%s"' % test_submission_address)
+
+    return (sender_address, test_submission_address)
+
+
 def create_parser(usage, args):
     parser = OptionParser(usage=usage)
 
     parser.add_option("--real", dest="is_real", action="store_true", default=False,
                       help="send a real submission to Facebook.  Otherwise, "
-                           "send the submission to a test address that is "
-                           "configured from within the script.")
+                           "send the submission to the test e-mail address.")
     parser.add_option("-m", "--message", dest="message", metavar="MESSAGE",
                       help="include this message text in the e-mail body")
     parser.add_option(DEBUG_OPTION, dest="verbose", action="store_true",
@@ -350,20 +400,14 @@ def submit_solution(args):
     parser = create_parser(usage=USAGE, args=args)
     (options, args) = parser.parse_args(args)
 
+    sender_address, test_submission_address = read_user_configuration()
+
     if not args:
         raise Error("You must provide a submission directory.")
     submission_directory = args[0]
 
-    if not SENDER_ADDRESS:
-        raise Error("Sender e-mail address not configured.  "
-                    "Set the SENDER_ADDRESS before using this script.")
-    if not TEST_SUBMISSION_ADDRESS:
-        raise Error("Test submission e-mail address not configured.  "
-                    "Set the TEST_SUBMISSION_ADDRESS before using this script.")
-
-    sender_address = SENDER_ADDRESS
     submission_address = (REAL_SUBMISSION_ADDRESS if options.is_real else
-                          TEST_SUBMISSION_ADDRESS)
+                          test_submission_address)
     message = options.message if options.message else ""
 
     puzzle_name = check_submission_directory(submission_directory)
@@ -390,7 +434,7 @@ def exit_with_error(message):
     print """
 ERROR: %s
 
-Pass -h or --help for usage instructions and available options.""" % message
+Pass -h or --help for help documentation and available options.""" % message
     exit(1)
 
 

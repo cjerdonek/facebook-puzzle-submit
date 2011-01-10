@@ -25,20 +25,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-This project contains a Python script for submitting puzzle solutions to
-the Facebook PuzzleBot, per this web page:
+This project contains a user-friendly Python script for submitting puzzle
+solutions to the Facebook PuzzleBot, per this web page:
 
 http://www.facebook.com/careers/puzzles.php
+
+Features of the script include--
+
+* CC'ing puzzle submissions to the sender
+* a "test mode" for sending submissions to a test e-mail address
+* tarring and gzipping a directory
+* automatic puzzle name detection and validation
+* allowing the inclusion of a descriptive note in the e-mail body
 
 This script is especially useful for submitting solutions from a gmail
 account, as the Facebook PuzzleBot is/was unable to read e-mail attachments
 attached using gmail's GUI.  The script author has only tried this script
 using gmail's SMTP servers at smtp.gmail.com.
 
-Setup:
-
-You will need to set the SENDER_ADDRESS and TEST_SUBMISSION_ADDRESS
-constants inside the script before using it.
-
-For usage instructions, execute this script with the -h or --help option.
+For help documentation, execute this script with the -h or --help option.
 
