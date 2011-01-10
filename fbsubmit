@@ -388,17 +388,16 @@ def add_attachment(mime_multipart, attachment_path):
     mime_multipart.attach(part)
 
 
-def mail(smtp_host, smtp_port, sender_address, sender_pwd, mail_tos,
-         subject, body, attachment_paths):
+def mail(smtp_host, smtp_port, sender_address, sender_pwd,
+         to_addresses, cc_addresses, subject, body, attachment_paths):
     """Send an e-mail."""
-    mail_ccs = [sender_address]
-    mail_recipients = mail_tos + mail_ccs
+    recipient_addresses = to_addresses + cc_addresses
 
     multi = MIMEMultipart()
 
     multi['From'] = sender_address
-    multi['To'] = COMMASPACE.join(mail_tos)
-    multi['Cc'] = COMMASPACE.join(mail_ccs)
+    multi['To'] = COMMASPACE.join(to_addresses)
+    multi['Cc'] = COMMASPACE.join(cc_addresses)
     multi['Subject'] = subject
 
     multi.attach(MIMEText(body))
@@ -416,7 +415,7 @@ def mail(smtp_host, smtp_port, sender_address, sender_pwd, mail_tos,
     _log.info('Logging in as: %s...' % sender_address)
     mailServer.login(sender_address, sender_pwd)
     _log.info('Sending mail to: %s...' % str(mail_recipients))
-    mailServer.sendmail(sender_address, mail_recipients, multi.as_string())
+    mailServer.sendmail(sender_address, recipient_addresses, multi.as_string())
 
     mailServer.close()
 
@@ -453,7 +452,8 @@ def submit_solution(args):
          smtp_port=SMTP_PORT,
          sender_address=sender_address,
          sender_pwd=sender_pwd,
-         mail_tos=[submission_address],
+         to_addresses=[submission_address],
+         cc_addresses=[sender_address],  # CC to the sender.
          subject=puzzle_name,
          body=email_body,
          attachment_paths=attachment_paths)
