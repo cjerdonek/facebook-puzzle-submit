@@ -480,6 +480,10 @@ def submit_solution(args):
 
 def exit_with_error(message):
     """Display an error message, and exit the program."""
+    # Skip to the beginning of the next line, e.g. in case we are in
+    # the middle of the password prompt.
+    print
+
     _log.error("""%s
 
 Pass -h or --help for help documentation and available options.""" % message)
