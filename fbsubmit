@@ -66,7 +66,7 @@ TEST_ENV_NAME = "FACEBOOK_PUZZLE_TEST_EMAIL_ADDRESS"
 DEBUG_OPTION = "-v"
 EXCLUDE_FROM_TAR = [".pyc"]
 LIB_DIRECTORY_NAME = "lib"
-REAL_SUBMISSION_ADDRESS = "1051962371@fb.com"
+FACEBOOK_EMAIL_ADDRESS = "1051962371@fb.com"
 
 VALID_PUZZLE_NAMES = [
     "battleship",
@@ -209,13 +209,13 @@ def configure_logging(logging_level=None):
 def create_parser(usage, args):
     parser = OptionParser(usage=usage)
 
-    parser.add_option("--real", dest="is_real", action="store_true", default=False,
+    parser.add_option("--real", dest="real_mode", action="store_true", default=False,
                       help='run the script in "real mode" and send the '
                            'solution to Facebook.  Otherwise, run the '
                            'script in "test mode" and use the test e-mail '
                            'address.')
-    parser.add_option("-m", "--message", dest="message", metavar="MESSAGE",
-                      help="include this message text in the e-mail body")
+    parser.add_option("-m", "--message", dest="message", metavar="MESSAGE", default="",
+                      help="include MESSAGE in the e-mail body")
     parser.add_option(DEBUG_OPTION, dest="verbose", action="store_true",
                       help="log verbosely")
 
@@ -446,10 +446,8 @@ def submit_solution(args):
 
     puzzle_name, submission_directory = read_arguments(args)
 
-    submission_address = (REAL_SUBMISSION_ADDRESS if options.is_real else
-                          test_address)
-    message = options.message if options.message else ""
-
+    submission_address = (FACEBOOK_EMAIL_ADDRESS if options.real_mode else test_address)
+    message = options.message
     attachment_paths = prep_attachments(puzzle_name, submission_directory)
 
     _log.info("""Submitting puzzle "%(puzzle_name)s"...
@@ -459,7 +457,7 @@ def submit_solution(args):
   Attachments:
     %(attachment_paths)s""" % {"puzzle_name": puzzle_name,
                                "submission_address": submission_address,
-                               "mode": "real" if options.is_real else "test",
+                               "mode": "real" if options.real_mode else "test",
                                "message": ('"%s"' % message) if message else "None",
                                "attachment_paths": "\n    ".join(attachment_paths)})
 
