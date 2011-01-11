@@ -45,7 +45,7 @@ import getpass
 import logging
 from optparse import OptionParser
 import os
-import smtplib
+from smtplib import SMTP
 import sys
 import tarfile
 
@@ -400,36 +400,36 @@ def add_attachment(mime_multipart, attachment_path):
     mime_multipart.attach(part)
 
 
-def mail(smtp_host, smtp_port, sender_address, sender_pwd,
-         to_addresses, cc_addresses, subject, body, attachment_paths):
+def send_email(smtp_host, smtp_port, sender_address, sender_pwd,
+               to_addresses, cc_addresses, subject, body, attachment_paths):
     """Send an e-mail."""
-    recipient_addresses = to_addresses + cc_addresses
-
     multi = MIMEMultipart()
 
-    multi['From'] = sender_address
-    multi['To'] = COMMASPACE.join(to_addresses)
-    multi['Cc'] = COMMASPACE.join(cc_addresses)
-    multi['Subject'] = subject
+    multi["From"] = sender_address
+    multi["To"] = COMMASPACE.join(to_addresses)
+    multi["Cc"] = COMMASPACE.join(cc_addresses)
+    multi["Subject"] = subject
 
     multi.attach(MIMEText(body))
 
     for attachment_path in attachment_paths:
-        _log.debug("Adding attachment to e-mail: %s" % attachment_path)
         add_attachment(multi, attachment_path)
 
     _log.info("Connecting to: %s:%s..." % (smtp_host, smtp_port))
-    mailServer = smtplib.SMTP(smtp_host, smtp_port)
-    mailServer.ehlo()
-    mailServer.starttls()
-    mailServer.ehlo()
+    smtp_connection = SMTP(smtp_host, smtp_port)
+    smtp_connection.ehlo()
+    smtp_connection.starttls()
+    smtp_connection.ehlo()
 
-    _log.info('Logging in as: %s...' % sender_address)
-    mailServer.login(sender_address, sender_pwd)
-    _log.info('Sending mail to: %s...' % str(recipient_addresses))
-    mailServer.sendmail(sender_address, recipient_addresses, multi.as_string())
+    _log.info("Logging in as: %s..." % sender_address)
+    smtp_connection.login(sender_address, sender_pwd)
 
-    mailServer.close()
+    recipient_addresses = to_addresses + cc_addresses
+
+    _log.info("Sending mail to: %s..." % ", ".join(recipient_addresses))
+    smtp_connection.sendmail(sender_address, recipient_addresses, multi.as_string())
+
+    smtp_connection.close()
 
 
 def submit_solution(args):
@@ -467,15 +467,15 @@ def submit_solution(args):
 
     email_body = "Facebook PuzzleBot submission: %s\n" % message
 
-    mail(smtp_host=SMTP_HOST,
-         smtp_port=SMTP_PORT,
-         sender_address=sender_address,
-         sender_pwd=sender_pwd,
-         to_addresses=[submission_address],
-         cc_addresses=[sender_address],  # CC to the sender.
-         subject=puzzle_name,
-         body=email_body,
-         attachment_paths=attachment_paths)
+    send_email(smtp_host=SMTP_HOST,
+               smtp_port=SMTP_PORT,
+               sender_address=sender_address,
+               sender_pwd=sender_pwd,
+               to_addresses=[submission_address],
+               cc_addresses=[sender_address],  # CC to the sender.
+               subject=puzzle_name,
+               body=email_body,
+               attachment_paths=attachment_paths)
 
 
 def exit_with_error(message):
