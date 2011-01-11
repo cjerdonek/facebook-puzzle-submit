@@ -213,7 +213,8 @@ def create_parser(usage, args):
                       help='run the script in "real mode" and send the '
                            'solution to Facebook.  Otherwise, run the '
                            'script in "test mode" and use the test e-mail '
-                           'address.')
+                           'address.  The script defaults to "test mode" to '
+                           'prevent accidental submissions.')
     parser.add_option("-m", "--message", dest="message", metavar="MESSAGE", default="",
                       help="include MESSAGE in the e-mail body")
     parser.add_option(DEBUG_OPTION, dest="verbose", action="store_true",
