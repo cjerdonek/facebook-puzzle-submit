@@ -105,10 +105,11 @@ to using this script.
 
 The sender e-mail address is the e-mail address from which to send
 puzzle solutions to Facebook (i.e. the "From:" for the e-mails sent to
-Facebook).
+Facebook).  This is also the address used to log into the SMTP server
+configured in the script.
 
 The test e-mail address is the e-mail address to use for testing this
-script.  When running this script in "test mode," the script e-mails
+script.  When running the script in "test mode," the script e-mails
 the puzzle solution to the test e-mail address instead of to Facebook.
 Consult the rest of the help documentation for information on how
 to run the script in "real mode" vs. "test mode."
@@ -122,8 +123,8 @@ The second way is to set corresponding environment variables.
 If you are familiar with setting environment variables, you can store
 the e-mail addresses as environment variables with names--
 
-* %(sender_env_name)s
-* %(test_env_name)s
+ * %(sender_env_name)s
+ * %(test_env_name)s
 
 The environment variables, if set, take precedence over the script constants.
 
@@ -144,10 +145,10 @@ The script attaches at most two files from the directory, as follows:
     a file in the given directory whose name matches the name of the puzzle
     being submitted (i.e. the puzzle executable), and it attaches that.
 
-(2) Optionally, the given directory can include a subdirectory called "%(lib_folder)s".
-    If this directory exists, the script tars, gzips, and attaches this
-    directory as a file called "%(lib_folder)s.tar.gz".  The script
-    excludes certain files like hidden files from the gzipped tar file.
+(2) Optionally, the given directory can include a library subdirectory
+    called "%(lib_folder)s".  If this directory exists, the script tars,
+    gzips, and attaches this directory as a file called "%(lib_folder)s.tar.gz".
+    The script excludes from the tar file certain files like hidden files.
 
 Below is an example of how to organize your files for use with this script.
 
@@ -156,27 +157,27 @@ facebook-puzzles/
         c/
             Makefile
             log.txt (ignored, not attached to e-mail)
-            lib/
+            %(lib_folder)s/
                 meepmeep.c
         python/
             hoppity (executable)
             test.py (ignored, not attached to e-mail)
-            lib/
+            %(lib_folder)s/
                 __init__.py
                 hoppity.py
     meepmeep/
         solution1/
-            <makefile or executable, and optional lib folder>
+            <makefile or executable, and optional library directory>
         solution2/
-            <makefile or executable, and optional lib folder>
+            <makefile or executable, and optional library directory>
 
 With the above hierarchy, all of the following are valid directories
 to provide to the script:
 
-* facebook-puzzles/hoppity/c
-* facebook-puzzles/hoppity/python
-* facebook-puzzles/meepmeep/solution1
-* facebook-puzzles/meepmeep/solution2""" % {
+ * facebook-puzzles/hoppity/c
+ * facebook-puzzles/hoppity/python
+ * facebook-puzzles/meepmeep/solution1
+ * facebook-puzzles/meepmeep/solution2""" % {
     "lib_folder": LIB_DIRECTORY_NAME,
     "sender_env_name": SENDER_ENV_NAME,
     "test_env_name": TEST_ENV_NAME
@@ -209,8 +210,10 @@ def create_parser(usage, args):
     parser = OptionParser(usage=usage)
 
     parser.add_option("--real", dest="is_real", action="store_true", default=False,
-                      help="send a real submission to Facebook.  Otherwise, "
-                           "send the submission to the test e-mail address.")
+                      help='run the script in "real mode" and send the '
+                           'solution to Facebook.  Otherwise, run the '
+                           'script in "test mode" and use the test e-mail '
+                           'address.')
     parser.add_option("-m", "--message", dest="message", metavar="MESSAGE",
                       help="include this message text in the e-mail body")
     parser.add_option(DEBUG_OPTION, dest="verbose", action="store_true",
@@ -357,6 +360,7 @@ def prep_attachments(puzzle_name, submission_directory):
         _log.info("Found makefile.")
         file_path = makefile_path
     else:
+        _log.info("No makefile found: skipping.")
         executable_path = os.path.join(submission_directory, puzzle_name)
         if not os.path.exists(executable_path) or not os.path.isfile(executable_path):
             raise Error("""Neither a makefile nor a puzzle executable was found.
@@ -448,9 +452,16 @@ def submit_solution(args):
 
     attachment_paths = prep_attachments(puzzle_name, submission_directory)
 
-    print 'Submitting puzzle "%s" to %s with--' % (puzzle_name, submission_address)
-    print "Message: %s" % message
-    print "Attachments: %s" % str(attachment_paths)
+    _log.info("""Submitting puzzle "%(puzzle_name)s"...
+  To: %(submission_address)s (%(mode)s mode)
+  Message:
+    %(message)s
+  Attachments:
+    %(attachment_paths)s""" % {"puzzle_name": puzzle_name,
+                               "submission_address": submission_address,
+                               "mode": "real" if options.is_real else "test",
+                               "message": ('"%s"' % message) if message else "None",
+                               "attachment_paths": "\n    ".join(attachment_paths)})
 
     sender_pwd = getpass.getpass(prompt="Password for %s: " % sender_address)
 
