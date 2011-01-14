@@ -88,9 +88,10 @@ VALID_PUZZLE_NAMES = [
     "usrbincrash",
     ]
 
-# Escape the leading "%" since "p" is not a valid format character.
-# The optparse module, however, recognizes "%prog" and replaces it
-# with the current script name.
+# Escape the leading "%" so that the leading "%p" is not interpreted
+# as a Python string formatting conversion specifier.  The optparse
+# module, however, recognizes "%prog" by replacing it with the current
+# script name.
 USAGE = """%%prog [options] directory
 
 This script sends to the Facebook PuzzleBot a puzzle solution contained in
